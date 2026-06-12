@@ -1,0 +1,6 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+
+# Local server pid file (written by start.sh)
+*.pid

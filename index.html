@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todoist Analyst</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind (Play CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-900/40">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold leading-tight">Todoist Analyst</h1>
+          <p class="text-xs text-slate-500 leading-tight" id="last-updated">Personal productivity insights</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="refresh-btn" type="button" title="Refresh data"
+          class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z" clip-rule="evenodd" />
+          </svg>
+          Refresh
+        </button>
+        <button id="settings-btn" type="button" title="Settings"
+          class="inline-flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8.34 1.804A1 1 0 019.32 1h1.36a1 1 0 01.98.804l.215 1.072c.073.36.36.66.717.78.355.121.75.106 1.076-.06l.969-.5a1 1 0 011.21.39l.665 1.15a1 1 0 01-.214 1.231l-.838.74a.998.998 0 000 1.49l.838.74a1 1 0 01.214 1.232l-.665 1.15a1 1 0 01-1.21.39l-.97-.5a1.07 1.07 0 00-1.075-.06.998.998 0 00-.717.78l-.215 1.072a1 1 0 01-.98.804H9.32a1 1 0 01-.98-.804l-.215-1.072a.998.998 0 00-.717-.78 1.07 1.07 0 00-1.076.06l-.969.5a1 1 0 01-1.21-.39l-.665-1.15a1 1 0 01.214-1.232l.838-.74a.998.998 0 000-1.49l-.838-.74a1 1 0 01-.214-1.231l.665-1.15a1 1 0 011.21-.39l.97.5a1.07 1.07 0 001.075.06.998.998 0 00.717-.78l.215-1.072zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- Error banner -->
+    <div id="error-banner" class="hidden mb-6 rounded-lg border border-rose-800 bg-rose-950/60 text-rose-200 px-4 py-3 text-sm flex items-start gap-3">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+      </svg>
+      <div class="flex-1" id="error-banner-text">Something went wrong.</div>
+      <button id="error-banner-close" class="text-rose-300 hover:text-white">&times;</button>
+    </div>
+
+    <!-- Connect screen -->
+    <section id="connect-screen" class="hidden">
+      <div class="max-w-md mx-auto mt-16 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-900/40">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">Connect your Todoist account</h2>
+        <p class="text-slate-400 mb-6">
+          Enter your Todoist API token to see personalized stats, charts, and
+          productivity insights. Your token stays on this computer.
+        </p>
+        <button id="connect-btn" type="button"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors shadow-lg shadow-indigo-900/30">
+          Connect Todoist
+        </button>
+      </div>
+    </section>
+
+    <!-- Loading state -->
+    <section id="loading-state" class="hidden">
+      <div class="flex flex-col items-center justify-center mt-24 text-slate-400">
+        <svg class="animate-spin h-8 w-8 text-indigo-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p>Loading your dashboard&hellip;</p>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" class="hidden">
+
+      <!-- KPI cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div class="kpi-card">
+          <p class="kpi-label">Active Tasks</p>
+          <p class="kpi-value" id="kpi-active">&ndash;</p>
+        </div>
+        <div class="kpi-card">
+          <p class="kpi-label">Overdue</p>
+          <p class="kpi-value text-rose-400" id="kpi-overdue">&ndash;</p>
+        </div>
+        <div class="kpi-card">
+          <p class="kpi-label">Completed Today</p>
+          <p class="kpi-value text-emerald-400" id="kpi-completed-today">&ndash;</p>
+        </div>
+        <div class="kpi-card">
+          <p class="kpi-label">Completed This Week</p>
+          <p class="kpi-value text-emerald-400" id="kpi-completed-week">&ndash;</p>
+        </div>
+        <div class="kpi-card">
+          <p class="kpi-label">Current Streak</p>
+          <p class="kpi-value text-amber-400" id="kpi-streak">&ndash;</p>
+        </div>
+      </div>
+
+      <!-- Charts grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <div class="chart-card lg:col-span-2">
+          <h3 class="chart-title">Completions Over Time (Last 30 Days)</h3>
+          <div class="chart-container chart-container-wide">
+            <canvas id="chart-completions-over-time"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Completions by Day of Week</h3>
+          <div class="chart-container">
+            <canvas id="chart-completions-by-weekday"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Weekly Completions (Last 8 Weeks)</h3>
+          <div class="chart-container">
+            <canvas id="chart-weekly-completions"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Active Tasks by Project</h3>
+          <p class="text-xs text-slate-500 -mt-3 mb-3">Click a slice to open those tasks in Todoist</p>
+          <div class="chart-container">
+            <canvas id="chart-tasks-by-project"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Active Tasks by Age</h3>
+          <p class="text-xs text-slate-500 -mt-3 mb-3">Click a bar to open those tasks in Todoist</p>
+          <div class="chart-container">
+            <canvas id="chart-tasks-by-age"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Active Tasks by Label</h3>
+          <p class="text-xs text-slate-500 -mt-3 mb-3">Click a bar to open those tasks in Todoist</p>
+          <div class="chart-container">
+            <canvas id="chart-tasks-by-label"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Upcoming Workload (Next 7 Days)</h3>
+          <p class="text-xs text-slate-500 -mt-3 mb-3">Click a bar to open those tasks in Todoist</p>
+          <div class="chart-container">
+            <canvas id="chart-upcoming"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card lg:col-span-2 hidden" id="karma-trend-card">
+          <h3 class="chart-title">Karma Trend</h3>
+          <div class="chart-container chart-container-wide">
+            <canvas id="chart-karma-trend"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-600">
+    Todoist Analyst &mdash; runs locally, your data stays on this computer.
+  </footer>
+
+  <!-- Settings modal -->
+  <div id="settings-overlay" class="hidden fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center px-4">
+    <div class="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+        <h2 class="text-base font-semibold">Settings</h2>
+        <button id="settings-close-btn" type="button" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+
+      <div class="px-5 py-5 space-y-4">
+        <div>
+          <label for="api-token-input" class="block text-sm font-medium text-slate-300 mb-1.5">Todoist API Token</label>
+          <div class="relative">
+            <input id="api-token-input" type="password" autocomplete="off" spellcheck="false"
+              placeholder="Paste your API token here"
+              class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 pr-10 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <button id="toggle-token-visibility" type="button" title="Show/hide token"
+              class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          <p class="mt-2 text-xs text-slate-500">
+            Find your token in Todoist &rarr; Settings &rarr; Integrations &rarr; Developer.
+            It is stored only in this browser's local storage.
+          </p>
+        </div>
+
+        <div id="test-connection-result" class="hidden text-sm rounded-lg px-3 py-2"></div>
+
+        <div class="flex items-center gap-2">
+          <button id="test-connection-btn" type="button"
+            class="px-3 py-2 rounded-lg text-sm font-medium text-slate-300 bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors">
+            Test Connection
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-800">
+        <button id="settings-cancel-btn" type="button"
+          class="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white transition-colors">
+          Cancel
+        </button>
+        <button id="settings-save-btn" type="button"
+          class="px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-lg shadow-indigo-900/30">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
