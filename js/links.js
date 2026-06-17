@@ -44,15 +44,8 @@ export function projectOverdueUrl(projectName) {
   return searchUrl(`#${name} & overdue`);
 }
 
-export function noDueDateUrl() {
-  return searchUrl('no date');
-}
-
-/** date: 'today', or a Date for a specific upcoming day. */
-export function deadlineUrl(date) {
-  if (date === 'today') return searchUrl('deadline: today');
-  const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return searchUrl(`deadline: ${label}`);
+export function taskUrl(taskId) {
+  return `${APP_BASE}/task/${encodeURIComponent(taskId)}`;
 }
 
 export function openInTodoist(url) {

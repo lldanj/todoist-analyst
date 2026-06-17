@@ -6,16 +6,20 @@ projects, labels, and completion history straight from the Todoist API and
 turns them into KPIs and charts to help you see where your attention is
 needed and where tasks are quietly piling up.
 
+![Active Tasks by Project](assets/screenshots/active-tasks-by-project.png)
+
 ## Features
 
 - **KPIs**: active tasks, overdue tasks, completed today/this week, current streak
 - **Charts**: completions over time, completions by day of week, weekly
-  completions, karma trend, active tasks by project, active tasks by age
+  completions, active tasks by project, active tasks by age
   (how long ago tasks were created), active tasks by label, and upcoming
   workload
 - **Click-through links**: click a bar or slice on most charts to open the
   matching filtered view directly in the Todoist web app
 - Dark theme, responsive layout
+
+![Tasks by Label](assets/screenshots/tasks-by-label.png)
 
 ## Getting your Todoist API token
 
@@ -62,6 +66,8 @@ even after a reboot — no terminal window needed. To remove it:
 
 On first load, the app will ask you to connect your Todoist account. Click
 the gear icon (or the **Connect** button) and paste in your API token.
+
+![Weekly Completions](assets/screenshots/weekly-completions.png)
 
 ## Privacy & security
 

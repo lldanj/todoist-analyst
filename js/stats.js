@@ -69,6 +69,17 @@ export function countCompletedThisWeek(completedTasks, now = new Date()) {
   }).length;
 }
 
+/** Average number of tasks completed per day over the trailing window. */
+export function avgCompletedPerDay(completedTasks, days = 14, now = new Date()) {
+  const today = startOfDay(now);
+  const start = addDays(today, -(days - 1));
+  const count = completedTasks.filter((t) => {
+    const d = new Date(t.completedAt);
+    return d >= start && d <= now;
+  }).length;
+  return count / days;
+}
+
 /**
  * Current daily streak: prefers the value from Todoist's productivity
  * stats; falls back to counting consecutive days (ending today or
@@ -198,6 +209,48 @@ export function tasksByLabel(tasks) {
   };
 }
 
+function taskListSummary(tasks, predicate) {
+  const matches = tasks.filter(predicate);
+  const sorted = [...matches].sort((a, b) => new Date(a.added_at) - new Date(b.added_at));
+  return { count: matches.length, tasks: sorted.map((t) => ({ id: t.id, content: t.content })) };
+}
+
+// Project lists treated as "parked" rather than actionable — tasks here are
+// excluded from the without-a-label breakdown even if they lack a label.
+const EXCLUDED_PROJECT_NAMES = new Set(['someday maybe', 'reference']);
+
+/**
+ * Active tasks with no label, grouped by project (alphabetically), omitting
+ * tasks in the "Someday Maybe" and "Reference" projects since those are
+ * parked lists rather than actionable work.
+ */
+export function tasksWithoutLabel(tasks, projects) {
+  const nameById = new Map(projects.map((p) => [p.id, p.name]));
+
+  const matches = tasks.filter((t) => {
+    if (t.labels && t.labels.length > 0) return false;
+    const projectName = nameById.get(t.project_id) || 'No Project';
+    return !EXCLUDED_PROJECT_NAMES.has(projectName.toLowerCase());
+  });
+
+  const byProject = new Map(); // projectName -> tasks
+  for (const t of matches) {
+    const projectName = nameById.get(t.project_id) || 'No Project';
+    if (!byProject.has(projectName)) byProject.set(projectName, []);
+    byProject.get(projectName).push({ id: t.id, content: t.content });
+  }
+
+  const groups = [...byProject.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([projectName, projectTasks]) => ({ projectName, tasks: projectTasks }));
+
+  return { count: matches.length, groups };
+}
+
+export function tasksWithoutProject(tasks) {
+  return taskListSummary(tasks, (t) => !t.project_id);
+}
+
 export function upcomingWorkload(tasks, days = 7, now = new Date()) {
   const today = startOfDay(now);
   const counts = new Map();
@@ -250,33 +303,6 @@ export function tasksByAge(tasks, now = new Date()) {
     data: counts,
     ranges: AGE_BUCKETS.map((b) => ({ minDays: b.minDays, maxDays: b.maxDays })),
   };
-}
-
-/**
- * Builds a karma-trend series from productivity stats, if a usable one
- * exists. Returns null when no chartable series is available, so the
- * caller can hide the chart entirely.
- */
-export function karmaTrend(productivityStats) {
-  if (!productivityStats) return null;
-
-  const series = productivityStats.daysItems || productivityStats.weekItems;
-  if (!Array.isArray(series) || series.length === 0) return null;
-
-  const labels = [];
-  const data = [];
-  for (const entry of series) {
-    const dateStr = entry.date || entry.from;
-    const value = entry.total_completed ?? entry.value ?? entry.count;
-    if (dateStr === undefined || value === undefined) return null;
-    labels.push(shortDateLabel(new Date(`${dateStr}T00:00:00`)));
-    data.push(value);
-  }
-
-  // Series is typically newest-first; show chronologically.
-  labels.reverse();
-  data.reverse();
-  return { labels, data };
 }
 
 /**
@@ -367,39 +393,6 @@ export function avgCompletionDays(completedTasks) {
   }
   if (diffs.length === 0) return null;
   const avg = diffs.reduce((sum, d) => sum + d, 0) / diffs.length;
-  return Math.round(avg * 10) / 10;
+  return Math.round(avg);
 }
 
-/** Active tasks with neither a due date nor a deadline set — the "someday" pile. */
-export function countTasksWithoutDueDate(tasks) {
-  return tasks.filter((t) => !t.due && !t.deadline).length;
-}
-
-/**
- * Mirrors upcomingWorkload but for the `deadline` field (a separate,
- * date-only field from `due`).
- */
-export function upcomingDeadlines(tasks, days = 7, now = new Date()) {
-  const today = startOfDay(now);
-  const counts = new Map();
-
-  for (const t of tasks) {
-    if (!t.deadline?.date) continue;
-    const deadlineDate = startOfDay(new Date(`${t.deadline.date.slice(0, 10)}T00:00:00`));
-    const diffDays = Math.round((deadlineDate - today) / MS_PER_DAY);
-    if (diffDays < 0 || diffDays >= days) continue;
-    const key = toLocalDateStr(deadlineDate);
-    counts.set(key, (counts.get(key) || 0) + 1);
-  }
-
-  const labels = [];
-  const data = [];
-  const dates = [];
-  for (let i = 0; i < days; i++) {
-    const d = addDays(today, i);
-    labels.push(i === 0 ? 'Today' : shortDateLabel(d));
-    data.push(counts.get(toLocalDateStr(d)) || 0);
-    dates.push(i === 0 ? 'today' : d);
-  }
-  return { labels, data, dates };
-}

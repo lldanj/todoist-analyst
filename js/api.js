@@ -142,9 +142,9 @@ export async function fetchCompletedTasks({ since, until, maxPages = 5 } = {}) {
 }
 
 /**
- * Fetches productivity/karma stats. Returns a normalized object or null if
- * the endpoint is unavailable / returns an unrecognized shape, so dependent
- * UI (current streak KPI, karma trend chart) can degrade gracefully.
+ * Fetches productivity stats. Returns a normalized object or null if the
+ * endpoint is unavailable / returns an unrecognized shape, so dependent UI
+ * (current streak KPI) can degrade gracefully.
  */
 export async function fetchProductivityStats() {
   let data;
@@ -162,10 +162,6 @@ export async function fetchProductivityStats() {
   const currentWeeklyStreak = goals.current_weekly_streak?.count ?? null;
 
   return {
-    karma: data.karma ?? null,
-    karmaTrend: data.karma_trend ?? null,
-    daysItems: Array.isArray(data.days_items) ? data.days_items : null,
-    weekItems: Array.isArray(data.week_items) ? data.week_items : null,
     currentDailyStreak,
     currentWeeklyStreak,
   };
