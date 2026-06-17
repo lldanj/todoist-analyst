@@ -1,7 +1,7 @@
 // Chart.js setup: shared dark theme + one render function per chart.
 // `Chart` is loaded globally via the Chart.js UMD CDN bundle in index.html.
 
-import { projectUrl, labelUrl, dueDateUrl, createdAgeUrl, projectOverdueUrl, deadlineUrl, openInTodoist } from './links.js';
+import { projectUrl, labelUrl, dueDateUrl, createdAgeUrl, projectOverdueUrl, openInTodoist } from './links.js';
 
 const GRID_COLOR = 'rgba(148, 163, 184, 0.08)';
 const TEXT_COLOR = '#94a3b8';
@@ -133,29 +133,23 @@ export function renderWeeklyCompletions({ labels, data }) {
 
 export function renderTasksByProject({ labels, data, ids }) {
   return renderChart('chart-tasks-by-project', {
-    type: 'doughnut',
+    type: 'bar',
     data: {
       labels,
       datasets: [{
         data,
         backgroundColor: PALETTE.slice(0, labels.length),
-        borderColor: '#0f172a',
-        borderWidth: 2,
+        borderRadius: 4,
+        maxBarThickness: 40,
       }],
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '60%',
+      ...baseCartesianOptions(),
       onHover: clickableHover,
       onClick: (evt, elements) => {
         if (!elements.length) return;
         const id = ids?.[elements[0].index];
         if (id) openInTodoist(projectUrl(id));
-      },
-      plugins: {
-        legend: { position: 'right', labels: { color: TEXT_COLOR, boxWidth: 12, padding: 10 } },
-        tooltip: tooltipStyle(),
       },
     },
   });
@@ -195,7 +189,7 @@ export function renderTasksByLabel({ labels, data }) {
     type: 'bar',
     data: {
       labels,
-      datasets: [{ data, backgroundColor: '#a78bfa', borderRadius: 4, maxBarThickness: 24 }],
+      datasets: [{ data, backgroundColor: '#4169e1', borderRadius: 4, maxBarThickness: 24 }],
     },
     options: {
       indexAxis: 'y',
@@ -281,25 +275,6 @@ export function renderOverdueByProject({ labels, data, projectNames }) {
   });
 }
 
-export function renderUpcomingDeadlines({ labels, data, dates }) {
-  return renderChart('chart-upcoming-deadlines', {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{ data, backgroundColor: '#fb7185', borderRadius: 4, maxBarThickness: 40 }],
-    },
-    options: {
-      ...baseCartesianOptions(),
-      onHover: clickableHover,
-      onClick: (evt, elements) => {
-        if (!elements.length) return;
-        const date = dates?.[elements[0].index];
-        if (date) openInTodoist(deadlineUrl(date));
-      },
-    },
-  });
-}
-
 export function renderNetTaskFlow({ labels, created, completed }) {
   return renderChart('chart-net-task-flow', {
     type: 'line',
@@ -338,25 +313,5 @@ export function renderNetTaskFlow({ labels, created, completed }) {
         y: { grid: { color: GRID_COLOR }, ticks: { color: TEXT_COLOR, precision: 0 }, beginAtZero: true },
       },
     },
-  });
-}
-
-export function renderKarmaTrend({ labels, data }) {
-  return renderChart('chart-karma-trend', {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Karma',
-        data,
-        borderColor: '#facc15',
-        backgroundColor: 'rgba(250, 204, 21, 0.12)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 0,
-        borderWidth: 2,
-      }],
-    },
-    options: baseCartesianOptions(),
   });
 }

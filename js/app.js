@@ -37,11 +37,11 @@ async function loadDashboard() {
       completedWeek: stats.countCompletedThisWeek(completedTasks, now),
       streak: stats.currentStreak(completedTasks, productivityStats, now),
       avgCompletion: stats.avgCompletionDays(completedTasks),
-      noDueDate: stats.countTasksWithoutDueDate(tasks),
+      avgPerDay14: stats.avgCompletedPerDay(completedTasks, 14, now),
     });
 
     charts.renderNetTaskFlow(stats.netTaskFlow(tasks, completedTasks, 90, now));
-    charts.renderCompletionsOverTime(stats.completionsOverTime(completedTasks, 90, now));
+    charts.renderCompletionsOverTime(stats.completionsOverTime(completedTasks, 30, now));
     charts.renderCompletionsByWeekday(stats.completionsByWeekday(completedTasks));
     charts.renderWeeklyCompletions(stats.weeklyCompletions(completedTasks, 8, now));
     charts.renderTasksByProject(stats.tasksByProject(tasks, projects));
@@ -49,15 +49,8 @@ async function loadDashboard() {
     charts.renderTasksByLabel(stats.tasksByLabel(tasks));
     charts.renderOverdueByProject(stats.overdueByProject(tasks, projects, now));
     charts.renderUpcomingWorkload(stats.upcomingWorkload(tasks, 7, now));
-    charts.renderUpcomingDeadlines(stats.upcomingDeadlines(tasks, 7, now));
-
-    const karma = stats.karmaTrend(productivityStats);
-    if (karma) {
-      ui.setKarmaCardVisible(true);
-      charts.renderKarmaTrend(karma);
-    } else {
-      ui.setKarmaCardVisible(false);
-    }
+    ui.renderTasksWithoutLabel(stats.tasksWithoutLabel(tasks, projects));
+    ui.renderTasksWithoutProject(stats.tasksWithoutProject(tasks));
 
     ui.setLastUpdated(now);
     ui.showView('dashboard');

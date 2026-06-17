@@ -35,11 +35,7 @@
   <header class="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
     <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-900/40">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-          </svg>
-        </div>
+        <img src="assets/logo.svg" alt="Todoist Insights logo" class="w-9 h-9 rounded-lg shadow-lg shadow-indigo-900/40" />
         <div>
           <h1 class="text-lg font-bold leading-tight">Todoist Analyst</h1>
           <p class="text-xs text-slate-500 leading-tight" id="last-updated">Personal productivity insights</p>
@@ -136,9 +132,9 @@
           <p class="kpi-label">Avg. Days to Complete</p>
           <p class="kpi-value text-sky-400" id="kpi-avg-completion">&ndash;</p>
         </div>
-        <div class="kpi-card kpi-clickable" id="kpi-no-due-date-card" title="Open tasks with no due date in Todoist">
-          <p class="kpi-label">No Due Date</p>
-          <p class="kpi-value text-slate-400" id="kpi-no-due-date">&ndash;</p>
+        <div class="kpi-card">
+          <p class="kpi-label">14-Day MA</p>
+          <p class="kpi-value text-emerald-400" id="kpi-avg-per-day-14">&ndash;</p>
         </div>
       </div>
 
@@ -147,7 +143,7 @@
 
         <div class="chart-card">
           <h3 class="chart-title">Active Tasks by Project</h3>
-          <p class="chart-subtitle">Click a slice to open those tasks in Todoist</p>
+          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
           <div class="chart-container">
             <canvas id="chart-tasks-by-project"></canvas>
           </div>
@@ -190,14 +186,6 @@
           </div>
         </div>
 
-        <div class="chart-card">
-          <h3 class="chart-title">Deadline in the next 7 Days</h3>
-          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
-          <div class="chart-container">
-            <canvas id="chart-upcoming-deadlines"></canvas>
-          </div>
-        </div>
-
         <div class="chart-card lg:col-span-2">
           <h3 class="chart-title">Net Task Flow (Last 90 Days)</h3>
           <p class="chart-subtitle">Tasks created vs. completed each day</p>
@@ -207,14 +195,14 @@
         </div>
 
         <div class="chart-card lg:col-span-2">
-          <h3 class="chart-title">Completions Over Time (Last 90 Days)</h3>
+          <h3 class="chart-title">Completions Over Time (Last 30 Days)</h3>
           <div class="chart-container chart-container-wide">
             <canvas id="chart-completions-over-time"></canvas>
           </div>
         </div>
 
         <div class="chart-card">
-          <h3 class="chart-title">Completions by Day of Week</h3>
+          <h3 class="chart-title">Completions by Day of Week (Last 90 Days)</h3>
           <div class="chart-container">
             <canvas id="chart-completions-by-weekday"></canvas>
           </div>
@@ -227,11 +215,16 @@
           </div>
         </div>
 
-        <div class="chart-card lg:col-span-2 hidden" id="karma-trend-card">
-          <h3 class="chart-title">Karma Trend</h3>
-          <div class="chart-container chart-container-wide">
-            <canvas id="chart-karma-trend"></canvas>
-          </div>
+        <div class="chart-card">
+          <h3 class="chart-title">Tasks Without a Label</h3>
+          <p class="task-list-count" id="count-no-label">&ndash;</p>
+          <ul class="task-list" id="list-no-label"></ul>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Tasks Without a Project</h3>
+          <p class="task-list-count" id="count-no-project">&ndash;</p>
+          <ul class="task-list" id="list-no-project"></ul>
         </div>
 
       </div>

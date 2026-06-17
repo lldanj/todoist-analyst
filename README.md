@@ -10,7 +10,7 @@ needed and where tasks are quietly piling up.
 
 - **KPIs**: active tasks, overdue tasks, completed today/this week, current streak
 - **Charts**: completions over time, completions by day of week, weekly
-  completions, karma trend, active tasks by project, active tasks by age
+  completions, active tasks by project, active tasks by age
   (how long ago tasks were created), active tasks by label, and upcoming
   workload
 - **Click-through links**: click a bar or slice on most charts to open the

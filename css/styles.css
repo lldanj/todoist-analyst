@@ -30,10 +30,6 @@
   border-color: #334155;
 }
 
-.kpi-clickable {
-  cursor: pointer;
-}
-
 .kpi-label {
   font-size: 0.7rem;
   font-weight: 600;
@@ -107,7 +103,58 @@
    y-axis items above scroll. */
 .chart-axis {
   position: relative;
-  height: 36px;
+  height: 46px;
   margin-top: 0.25rem;
   border-top: 1px solid #1e293b;
+}
+
+.task-list-count {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin: -0.5rem 0 0.75rem;
+}
+
+.task-list {
+  max-height: 240px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-list li {
+  border-top: 1px solid #1e293b;
+}
+
+.task-list li:first-child {
+  border-top: none;
+}
+
+.task-list-group-header {
+  padding: 0.5rem 0.25rem 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-top: none !important;
+}
+
+.task-list-link {
+  display: block;
+  padding: 0.5rem 0.25rem;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.task-list-link:hover {
+  color: #38bdf8;
+}
+
+.task-list-empty {
+  padding: 0.5rem 0.25rem;
+  color: #64748b;
+  font-size: 0.9rem;
 }
