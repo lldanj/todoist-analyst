@@ -42,6 +42,22 @@ python3 -m http.server 8000
 
 and open `http://localhost:8000` manually in Brave or Chrome.
 
+## Running it persistently (macOS)
+
+Instead of running `./start.sh` every time, you can install a LaunchAgent
+that starts the server automatically at login and keeps it running:
+
+```bash
+./launchd/install.sh
+```
+
+The dashboard will then always be available at `http://localhost:8000`,
+even after a reboot — no terminal window needed. To remove it:
+
+```bash
+./launchd/uninstall.sh
+```
+
 ## First-time setup
 
 On first load, the app will ask you to connect your Todoist account. Click
@@ -65,7 +81,8 @@ the gear icon (or the **Connect** button) and paste in your API token.
 
 ## Stopping the server
 
-Press `Ctrl+C` in the terminal running `start.sh`.
+Press `Ctrl+C` in the terminal running `start.sh`. If you installed the
+LaunchAgent instead, run `./launchd/uninstall.sh`.
 
 ## License
 
