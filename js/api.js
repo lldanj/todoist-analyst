@@ -137,6 +137,7 @@ export async function fetchCompletedTasks({ since, until, maxPages = 5 } = {}) {
     content: item.content,
     projectId: item.project_id ?? item.v2_project_id ?? null,
     completedAt: item.completed_at ?? item.completed_date ?? item.date_completed ?? null,
+    addedAt: item.added_at ?? null,
   })).filter((item) => item.completedAt);
 }
 

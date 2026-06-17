@@ -36,15 +36,20 @@ async function loadDashboard() {
       completedToday: stats.countCompletedOnDate(completedTasks, now),
       completedWeek: stats.countCompletedThisWeek(completedTasks, now),
       streak: stats.currentStreak(completedTasks, productivityStats, now),
+      avgCompletion: stats.avgCompletionDays(completedTasks),
+      noDueDate: stats.countTasksWithoutDueDate(tasks),
     });
 
-    charts.renderCompletionsOverTime(stats.completionsOverTime(completedTasks, 30, now));
+    charts.renderNetTaskFlow(stats.netTaskFlow(tasks, completedTasks, 90, now));
+    charts.renderCompletionsOverTime(stats.completionsOverTime(completedTasks, 90, now));
     charts.renderCompletionsByWeekday(stats.completionsByWeekday(completedTasks));
     charts.renderWeeklyCompletions(stats.weeklyCompletions(completedTasks, 8, now));
     charts.renderTasksByProject(stats.tasksByProject(tasks, projects));
     charts.renderTasksByAge(stats.tasksByAge(tasks, now));
     charts.renderTasksByLabel(stats.tasksByLabel(tasks));
+    charts.renderOverdueByProject(stats.overdueByProject(tasks, projects, now));
     charts.renderUpcomingWorkload(stats.upcomingWorkload(tasks, 7, now));
+    charts.renderUpcomingDeadlines(stats.upcomingDeadlines(tasks, 7, now));
 
     const karma = stats.karmaTrend(productivityStats);
     if (karma) {

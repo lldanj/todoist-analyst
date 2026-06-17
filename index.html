@@ -33,7 +33,7 @@
 
   <!-- Header -->
   <header class="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-900/40">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 20 20" fill="currentColor">
@@ -65,7 +65,7 @@
   </header>
 
   <!-- Main -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-6">
 
     <!-- Error banner -->
     <div id="error-banner" class="hidden mb-6 rounded-lg border border-rose-800 bg-rose-950/60 text-rose-200 px-4 py-3 text-sm flex items-start gap-3">
@@ -111,7 +111,7 @@
     <section id="dashboard" class="hidden">
 
       <!-- KPI cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
         <div class="kpi-card">
           <p class="kpi-label">Active Tasks</p>
           <p class="kpi-value" id="kpi-active">&ndash;</p>
@@ -132,13 +132,82 @@
           <p class="kpi-label">Current Streak</p>
           <p class="kpi-value text-amber-400" id="kpi-streak">&ndash;</p>
         </div>
+        <div class="kpi-card">
+          <p class="kpi-label">Avg. Days to Complete</p>
+          <p class="kpi-value text-sky-400" id="kpi-avg-completion">&ndash;</p>
+        </div>
+        <div class="kpi-card kpi-clickable" id="kpi-no-due-date-card" title="Open tasks with no due date in Todoist">
+          <p class="kpi-label">No Due Date</p>
+          <p class="kpi-value text-slate-400" id="kpi-no-due-date">&ndash;</p>
+        </div>
       </div>
 
       <!-- Charts grid -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
+        <div class="chart-card">
+          <h3 class="chart-title">Active Tasks by Project</h3>
+          <p class="chart-subtitle">Click a slice to open those tasks in Todoist</p>
+          <div class="chart-container">
+            <canvas id="chart-tasks-by-project"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Active Tasks by Age</h3>
+          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
+          <div class="chart-container">
+            <canvas id="chart-tasks-by-age"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Tasks by Label</h3>
+          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
+          <div class="chart-scroll">
+            <div class="chart-container" id="chart-tasks-by-label-wrap">
+              <canvas id="chart-tasks-by-label"></canvas>
+            </div>
+          </div>
+          <div class="chart-axis">
+            <canvas id="chart-tasks-by-label-axis"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Projects with Overdue Tasks</h3>
+          <p class="chart-subtitle">Click a bar to open those overdue tasks in Todoist</p>
+          <div class="chart-container">
+            <canvas id="chart-overdue-by-project"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Due in the next 7 Days</h3>
+          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
+          <div class="chart-container chart-container-tall">
+            <canvas id="chart-upcoming"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Deadline in the next 7 Days</h3>
+          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
+          <div class="chart-container">
+            <canvas id="chart-upcoming-deadlines"></canvas>
+          </div>
+        </div>
+
         <div class="chart-card lg:col-span-2">
-          <h3 class="chart-title">Completions Over Time (Last 30 Days)</h3>
+          <h3 class="chart-title">Net Task Flow (Last 90 Days)</h3>
+          <p class="chart-subtitle">Tasks created vs. completed each day</p>
+          <div class="chart-container chart-container-wide">
+            <canvas id="chart-net-task-flow"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card lg:col-span-2">
+          <h3 class="chart-title">Completions Over Time (Last 90 Days)</h3>
           <div class="chart-container chart-container-wide">
             <canvas id="chart-completions-over-time"></canvas>
           </div>
@@ -155,38 +224,6 @@
           <h3 class="chart-title">Weekly Completions (Last 8 Weeks)</h3>
           <div class="chart-container">
             <canvas id="chart-weekly-completions"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Active Tasks by Project</h3>
-          <p class="text-xs text-slate-500 -mt-3 mb-3">Click a slice to open those tasks in Todoist</p>
-          <div class="chart-container">
-            <canvas id="chart-tasks-by-project"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Active Tasks by Age</h3>
-          <p class="text-xs text-slate-500 -mt-3 mb-3">Click a bar to open those tasks in Todoist</p>
-          <div class="chart-container">
-            <canvas id="chart-tasks-by-age"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Active Tasks by Label</h3>
-          <p class="text-xs text-slate-500 -mt-3 mb-3">Click a bar to open those tasks in Todoist</p>
-          <div class="chart-container">
-            <canvas id="chart-tasks-by-label"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Upcoming Workload (Next 7 Days)</h3>
-          <p class="text-xs text-slate-500 -mt-3 mb-3">Click a bar to open those tasks in Todoist</p>
-          <div class="chart-container">
-            <canvas id="chart-upcoming"></canvas>
           </div>
         </div>
 

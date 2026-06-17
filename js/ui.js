@@ -1,5 +1,7 @@
 // DOM helpers: view switching, KPI rendering, error/loading states.
 
+import { noDueDateUrl, openInTodoist } from './links.js';
+
 const els = {
   connectScreen: document.getElementById('connect-screen'),
   loadingState: document.getElementById('loading-state'),
@@ -15,7 +17,10 @@ const els = {
     completedToday: document.getElementById('kpi-completed-today'),
     completedWeek: document.getElementById('kpi-completed-week'),
     streak: document.getElementById('kpi-streak'),
+    avgCompletion: document.getElementById('kpi-avg-completion'),
+    noDueDate: document.getElementById('kpi-no-due-date'),
   },
+  noDueDateCard: document.getElementById('kpi-no-due-date-card'),
 };
 
 const VIEWS = {
@@ -42,13 +47,17 @@ export function hideError() {
 
 els.errorBannerClose.addEventListener('click', hideError);
 
-export function renderKpis({ active, overdue, completedToday, completedWeek, streak }) {
+export function renderKpis({ active, overdue, completedToday, completedWeek, streak, avgCompletion, noDueDate }) {
   els.kpi.active.textContent = active;
   els.kpi.overdue.textContent = overdue;
   els.kpi.completedToday.textContent = completedToday;
   els.kpi.completedWeek.textContent = completedWeek;
   els.kpi.streak.textContent = streak === 1 ? '1 day' : `${streak} days`;
+  els.kpi.avgCompletion.textContent = avgCompletion == null ? '–' : `${avgCompletion}d`;
+  els.kpi.noDueDate.textContent = noDueDate;
 }
+
+els.noDueDateCard.addEventListener('click', () => openInTodoist(noDueDateUrl()));
 
 export function setKarmaCardVisible(visible) {
   els.karmaCard.classList.toggle('hidden', !visible);

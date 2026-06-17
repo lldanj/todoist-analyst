@@ -30,6 +30,10 @@
   border-color: #334155;
 }
 
+.kpi-clickable {
+  cursor: pointer;
+}
+
 .kpi-label {
   font-size: 0.7rem;
   font-weight: 600;
@@ -59,10 +63,16 @@
 }
 
 .chart-title {
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   font-weight: 600;
   color: #cbd5e1;
   margin-bottom: 1rem;
+}
+
+.chart-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: -0.5rem 0 0.75rem;
 }
 
 .chart-container {
@@ -74,8 +84,30 @@
   height: 280px;
 }
 
+.chart-container-tall {
+  height: 276px;
+}
+
 @media (min-width: 1024px) {
   .chart-container-wide {
     height: 320px;
   }
+}
+
+/* Scrollable wrapper for charts whose item count is unbounded (e.g. labels):
+   the inner .chart-container is sized to fit every item, and this wrapper
+   caps the visible height and scrolls if that's taller than the cap. */
+.chart-scroll {
+  max-height: 368px;
+  overflow-y: auto;
+}
+
+/* Frozen x-axis for .chart-scroll charts: a second small chart pinned below
+   the scroll area, sharing the same scale so it stays visible while the
+   y-axis items above scroll. */
+.chart-axis {
+  position: relative;
+  height: 36px;
+  margin-top: 0.25rem;
+  border-top: 1px solid #1e293b;
 }

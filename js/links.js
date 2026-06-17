@@ -34,6 +34,27 @@ export function createdAgeUrl(minDays, maxDays) {
   return searchUrl(parts.join(' & '));
 }
 
+/**
+ * Filter for overdue active tasks within a specific project. Project names
+ * with spaces or filter operators need quoting in Todoist's syntax.
+ */
+export function projectOverdueUrl(projectName) {
+  const needsQuotes = /[\s&|!()]/.test(projectName);
+  const name = needsQuotes ? `"${projectName}"` : projectName;
+  return searchUrl(`#${name} & overdue`);
+}
+
+export function noDueDateUrl() {
+  return searchUrl('no date');
+}
+
+/** date: 'today', or a Date for a specific upcoming day. */
+export function deadlineUrl(date) {
+  if (date === 'today') return searchUrl('deadline: today');
+  const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return searchUrl(`deadline: ${label}`);
+}
+
 export function openInTodoist(url) {
   window.open(url, '_blank', 'noopener');
 }

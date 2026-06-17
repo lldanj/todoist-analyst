@@ -204,7 +204,10 @@ export function upcomingWorkload(tasks, days = 7, now = new Date()) {
 
   for (const t of tasks) {
     if (!t.due?.date) continue;
-    const dueDate = startOfDay(new Date(`${t.due.date}T00:00:00`));
+    // `due.date` is "YYYY-MM-DD" for all-day tasks but can include a time
+    // component (e.g. "YYYY-MM-DDTHH:MM:SS") for tasks with a specific due
+    // time; take just the date part so this always parses as local midnight.
+    const dueDate = startOfDay(new Date(`${t.due.date.slice(0, 10)}T00:00:00`));
     const diffDays = Math.round((dueDate - today) / MS_PER_DAY);
     if (diffDays < 0 || diffDays >= days) continue;
     const key = toLocalDateStr(dueDate);
@@ -274,4 +277,129 @@ export function karmaTrend(productivityStats) {
   labels.reverse();
   data.reverse();
   return { labels, data };
+}
+
+/**
+ * Tasks created vs. tasks completed per day over the trailing window, so a
+ * growing/shrinking backlog is visible even when "completed" alone looks
+ * healthy. "Created" counts both still-active and now-completed tasks by
+ * their `added_at` date.
+ */
+export function netTaskFlow(tasks, completedTasks, days = 90, now = new Date()) {
+  const today = startOfDay(now);
+  const start = addDays(today, -(days - 1));
+
+  const created = new Map();
+  const completed = new Map();
+
+  const tally = (map, dateValue) => {
+    const d = startOfDay(new Date(dateValue));
+    if (d < start || d > today) return;
+    const key = toLocalDateStr(d);
+    map.set(key, (map.get(key) || 0) + 1);
+  };
+
+  for (const t of tasks) {
+    if (t.added_at) tally(created, t.added_at);
+  }
+  for (const t of completedTasks) {
+    if (t.addedAt) tally(created, t.addedAt);
+    tally(completed, t.completedAt);
+  }
+
+  const labels = [];
+  const createdData = [];
+  const completedData = [];
+  for (let i = 0; i < days; i++) {
+    const d = addDays(start, i);
+    const key = toLocalDateStr(d);
+    labels.push(shortDateLabel(d));
+    createdData.push(created.get(key) || 0);
+    completedData.push(completed.get(key) || 0);
+  }
+  return { labels, created: createdData, completed: completedData };
+}
+
+/**
+ * Overdue active tasks grouped by project, so neglected work is pinpointed
+ * to where it lives rather than just totaled. `projectNames` carries the
+ * project name for each bar (null for "Other") to build a filter link.
+ */
+export function overdueByProject(tasks, projects, now = new Date(), maxSlices = 7) {
+  const todayStr = toLocalDateStr(now);
+  const nameById = new Map(projects.map((p) => [p.id, p.name]));
+  const counts = new Map();
+
+  for (const t of tasks) {
+    if (!t.due?.date || t.due.date >= todayStr) continue;
+    const id = t.project_id;
+    counts.set(id, (counts.get(id) || 0) + 1);
+  }
+
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  const top = sorted.slice(0, maxSlices);
+  const rest = sorted.slice(maxSlices);
+  const restTotal = rest.reduce((sum, [, count]) => sum + count, 0);
+
+  const labels = top.map(([id]) => nameById.get(id) || 'Unknown');
+  const data = top.map(([, count]) => count);
+  const projectNames = top.map(([id]) => nameById.get(id) || 'Unknown');
+  if (restTotal > 0) {
+    labels.push('Other');
+    data.push(restTotal);
+    projectNames.push(null);
+  }
+
+  return { labels, data, projectNames };
+}
+
+/**
+ * Average time (in days) between a task being created and completed.
+ * Returns null if the completed-tasks data doesn't include creation
+ * dates, so the KPI can show "–" instead of a misleading 0.
+ */
+export function avgCompletionDays(completedTasks) {
+  const diffs = [];
+  for (const t of completedTasks) {
+    if (!t.addedAt || !t.completedAt) continue;
+    const diff = (new Date(t.completedAt) - new Date(t.addedAt)) / MS_PER_DAY;
+    if (diff >= 0) diffs.push(diff);
+  }
+  if (diffs.length === 0) return null;
+  const avg = diffs.reduce((sum, d) => sum + d, 0) / diffs.length;
+  return Math.round(avg * 10) / 10;
+}
+
+/** Active tasks with neither a due date nor a deadline set — the "someday" pile. */
+export function countTasksWithoutDueDate(tasks) {
+  return tasks.filter((t) => !t.due && !t.deadline).length;
+}
+
+/**
+ * Mirrors upcomingWorkload but for the `deadline` field (a separate,
+ * date-only field from `due`).
+ */
+export function upcomingDeadlines(tasks, days = 7, now = new Date()) {
+  const today = startOfDay(now);
+  const counts = new Map();
+
+  for (const t of tasks) {
+    if (!t.deadline?.date) continue;
+    const deadlineDate = startOfDay(new Date(`${t.deadline.date.slice(0, 10)}T00:00:00`));
+    const diffDays = Math.round((deadlineDate - today) / MS_PER_DAY);
+    if (diffDays < 0 || diffDays >= days) continue;
+    const key = toLocalDateStr(deadlineDate);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+
+  const labels = [];
+  const data = [];
+  const dates = [];
+  for (let i = 0; i < days; i++) {
+    const d = addDays(today, i);
+    labels.push(i === 0 ? 'Today' : shortDateLabel(d));
+    data.push(counts.get(toLocalDateStr(d)) || 0);
+    dates.push(i === 0 ? 'today' : d);
+  }
+  return { labels, data, dates };
 }
