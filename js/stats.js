@@ -217,7 +217,7 @@ function taskListSummary(tasks, predicate) {
 
 // Project lists treated as "parked" rather than actionable — tasks here are
 // excluded from the without-a-label breakdown even if they lack a label.
-const EXCLUDED_PROJECT_NAMES = new Set(['someday maybe', 'reference']);
+const EXCLUDED_PROJECT_NAMES = new Set(['someday maybe', 'reference', 'agendas', '#agendas']);
 
 /**
  * Active tasks with no label, grouped by project (alphabetically), omitting
@@ -394,5 +394,188 @@ export function avgCompletionDays(completedTasks) {
   if (diffs.length === 0) return null;
   const avg = diffs.reduce((sum, d) => sum + d, 0) / diffs.length;
   return Math.round(avg);
+}
+
+// --- New analytics -----------------------------------------------------------
+
+/** Week-over-week completion count comparison. Uses the full (unfiltered by
+    date range) completed tasks so the prior week is always available. */
+export function weekOverWeek(completedTasks, now = new Date()) {
+  const thisWeekStart = startOfWeek(now);
+  const lastWeekStart = addDays(thisWeekStart, -7);
+  const thisWeek = completedTasks.filter(t => {
+    const d = new Date(t.completedAt);
+    return d >= thisWeekStart && d <= now;
+  }).length;
+  const lastWeek = completedTasks.filter(t => {
+    const d = new Date(t.completedAt);
+    return d >= lastWeekStart && d < thisWeekStart;
+  }).length;
+  const diff = thisWeek - lastWeek;
+  const pct = lastWeek > 0 ? Math.round((diff / lastWeek) * 100) : null;
+  return { thisWeek, lastWeek, diff, pct };
+}
+
+/** Completed tasks counted per project (for the selected period). */
+export function completedByProject(completedTasks, projects, maxSlices = 8) {
+  const nameById = new Map(projects.map(p => [p.id, p.name]));
+  const counts = new Map();
+  for (const t of completedTasks) {
+    const id = t.projectId;
+    if (!id) continue;
+    counts.set(id, (counts.get(id) || 0) + 1);
+  }
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  const top = sorted.slice(0, maxSlices);
+  const rest = sorted.slice(maxSlices);
+  const restTotal = rest.reduce((sum, [, c]) => sum + c, 0);
+  const labels = top.map(([id]) => nameById.get(id) || 'Unknown');
+  const data = top.map(([, c]) => c);
+  const ids = top.map(([id]) => id);
+  if (restTotal > 0) { labels.push('Other'); data.push(restTotal); ids.push(null); }
+  return { labels, data, ids };
+}
+
+/** Backlog health score (0-100) plus a breakdown of what's hurting it. */
+export function backlogHealth(tasks, now = new Date()) {
+  const todayStr = toLocalDateStr(now);
+  const overdue = tasks.filter(t => t.due?.date && t.due.date.slice(0, 10) < todayStr).length;
+  const veryOld = tasks.filter(t => t.added_at && (now - new Date(t.added_at)) / MS_PER_DAY >= 60).length;
+  const highPriNoDue = tasks.filter(t => (t.priority || 1) >= 3 && !t.due?.date).length;
+  const score = Math.max(0, 100
+    - Math.min(overdue * 5, 40)
+    - Math.min(veryOld * 2, 30)
+    - Math.min(highPriNoDue * 3, 30));
+  return { score, overdue, veryOld, highPriNoDue, total: tasks.length };
+}
+
+/** Most recently completed tasks, newest first. */
+export function recentlyCompleted(completedTasks, n = 15) {
+  return [...completedTasks]
+    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+    .slice(0, n);
+}
+
+/** Creation-to-completion lead time, bucketed into a histogram. */
+const LEAD_TIME_BUCKETS = [
+  { label: 'Same Day', maxDays: 1 },
+  { label: '1-3 Days', minDays: 1, maxDays: 3 },
+  { label: '4-7 Days', minDays: 3, maxDays: 7 },
+  { label: '1-2 Wks', minDays: 7, maxDays: 14 },
+  { label: '2-4 Wks', minDays: 14, maxDays: 28 },
+  { label: '1-3 Mo', minDays: 28, maxDays: 90 },
+  { label: '3+ Mo', minDays: 90 },
+];
+
+export function leadTimeDistribution(completedTasks) {
+  const counts = new Array(LEAD_TIME_BUCKETS.length).fill(0);
+  let withData = 0;
+  for (const t of completedTasks) {
+    if (!t.addedAt || !t.completedAt) continue;
+    const days = (new Date(t.completedAt) - new Date(t.addedAt)) / MS_PER_DAY;
+    if (days < 0) continue;
+    withData++;
+    const idx = LEAD_TIME_BUCKETS.findIndex(
+      b => (b.minDays === undefined || days >= b.minDays) &&
+           (b.maxDays === undefined || days < b.maxDays)
+    );
+    if (idx !== -1) counts[idx] += 1;
+  }
+  return { labels: LEAD_TIME_BUCKETS.map(b => b.label), data: counts, withData };
+}
+
+/**
+ * Daily completion counts for the selected period, plus an optional
+ * comparison-period dataset for the equivalent prior window.
+ */
+export function completionTrends(completedTasks, days = 30, now = new Date(), compTasks = null) {
+  const today = startOfDay(now);
+  const start = addDays(today, -(days - 1));
+
+  const toCounts = (tasks, from, to) => {
+    const counts = new Map();
+    for (const t of tasks) {
+      const d = startOfDay(new Date(t.completedAt));
+      if (d < from || d > to) continue;
+      const key = toLocalDateStr(d);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return counts;
+  };
+
+  const counts = toCounts(completedTasks, start, today);
+  const labels = [];
+  const data = [];
+  for (let i = 0; i < days; i++) {
+    const d = addDays(start, i);
+    labels.push(shortDateLabel(d));
+    data.push(counts.get(toLocalDateStr(d)) || 0);
+  }
+
+  let compData = null;
+  if (compTasks) {
+    const compEnd = addDays(start, -1);
+    const compStart = addDays(compEnd, -(days - 1));
+    const compCounts = toCounts(compTasks, compStart, compEnd);
+    compData = [];
+    for (let i = 0; i < days; i++) {
+      compData.push(compCounts.get(toLocalDateStr(addDays(compStart, i))) || 0);
+    }
+  }
+
+  return { labels, data, compData };
+}
+
+/** Recurring tasks summary from active task list. */
+export function recurringTasks(tasks, now = new Date()) {
+  const todayStr = toLocalDateStr(now);
+  const recurring = tasks.filter(t => t.due?.is_recurring);
+  const overdue = recurring.filter(t => t.due?.date && t.due.date.slice(0, 10) < todayStr).length;
+  const dueToday = recurring.filter(t => t.due?.date && t.due.date.slice(0, 10) === todayStr).length;
+  const upcoming = recurring.filter(t => t.due?.date && t.due.date.slice(0, 10) > todayStr).length;
+  const noDue = recurring.filter(t => !t.due?.date).length;
+  return { total: recurring.length, overdue, dueToday, upcoming, noDue };
+}
+
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+  'from', 'is', 'are', 'was', 'be', 'it', 'this', 'that', 'i', 'my', 'me', 'up', 'do', 'get',
+  'not', 'no', 'so', 'as', 'if', 'we', 'you', 'he', 'she', 'they', 'its', 'our', 'all',
+  'can', 'will', 'just', 'has', 'have', 'had', 'did', 'any', 'new', 'use', 'add', 'set',
+  'out', 'into', 'more', 'than', 'then', 'when', 'what', 'who', 'how', 'about', 'also',
+  'been', 'each', 'per', 'via', 'etc',
+]);
+
+/** Most frequent words across active task names for the word cloud tile. */
+export function wordFrequency(tasks, maxWords = 50) {
+  const freq = {};
+  for (const t of tasks) {
+    const words = t.content.toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !STOP_WORDS.has(w) && !/^\d+$/.test(w));
+    for (const w of words) {
+      freq[w] = (freq[w] || 0) + 1;
+    }
+  }
+  return Object.entries(freq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxWords)
+    .map(([word, count]) => ({ word, count }));
+}
+
+/** Key metrics for the Insights Summary tile. */
+export function insightsSummary(completedTasks, allCompletedTasks, days, now = new Date()) {
+  const total = completedTasks.length;
+  const perDay = days > 0 ? total / days : 0;
+  const wow = weekOverWeek(allCompletedTasks, now);
+  const dayCounts = new Map();
+  for (const t of completedTasks) {
+    const key = toLocalDateStr(new Date(t.completedAt));
+    dayCounts.set(key, (dayCounts.get(key) || 0) + 1);
+  }
+  const bestDayCount = dayCounts.size > 0 ? Math.max(...dayCounts.values()) : 0;
+  const activeDays = dayCounts.size;
+  return { total, perDay, wow, bestDayCount, activeDays };
 }
 

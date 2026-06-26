@@ -158,3 +158,94 @@
   color: #64748b;
   font-size: 0.9rem;
 }
+
+.overdue-project-link {
+  color: #f43f5e;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.overdue-project-link:hover {
+  text-decoration: underline;
+}
+
+/* Section visibility: `contents` wrapper — hidden hides all children */
+[data-section].hidden > * {
+  display: none;
+}
+
+/* Section header labels between chart groups */
+.section-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #475569;
+  margin-bottom: 0.75rem;
+  padding-left: 0.125rem;
+}
+
+/* Filter bar date-range buttons */
+.date-btn {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.date-btn:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.date-btn.active {
+  background: #1e293b;
+  border-color: #6366f1;
+  color: #e2e8f0;
+}
+
+/* Project filter dropdown rows */
+.project-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.project-filter-row:hover {
+  background: #1e293b;
+}
+
+/* Insights summary tile stats */
+.insight-stat {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 0.625rem;
+  padding: 0.875rem 1rem;
+}
+
+.insight-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+
+.insight-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}

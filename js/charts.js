@@ -140,16 +140,23 @@ export function renderTasksByProject({ labels, data, ids }) {
         data,
         backgroundColor: PALETTE.slice(0, labels.length),
         borderRadius: 4,
-        maxBarThickness: 40,
+        maxBarThickness: 28,
       }],
     },
     options: {
-      ...baseCartesianOptions(),
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
       onHover: clickableHover,
       onClick: (evt, elements) => {
         if (!elements.length) return;
         const id = ids?.[elements[0].index];
         if (id) openInTodoist(projectUrl(id));
+      },
+      plugins: { legend: { display: false }, tooltip: tooltipStyle() },
+      scales: {
+        x: { grid: { color: GRID_COLOR }, ticks: { color: TEXT_COLOR, precision: 0 }, beginAtZero: true },
+        y: { grid: { display: false }, ticks: { color: TEXT_COLOR } },
       },
     },
   });
@@ -270,6 +277,102 @@ export function renderOverdueByProject({ labels, data, projectNames }) {
       scales: {
         x: { grid: { color: GRID_COLOR }, ticks: { color: TEXT_COLOR, precision: 0 }, beginAtZero: true },
         y: { grid: { display: false }, ticks: { color: TEXT_COLOR } },
+      },
+    },
+  });
+}
+
+export function renderCompletedByProject({ labels, data, ids }) {
+  return renderChart('chart-completed-by-project', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: PALETTE.slice(0, labels.length),
+        borderRadius: 4,
+        maxBarThickness: 28,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      onHover: clickableHover,
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const id = ids?.[elements[0].index];
+        if (id) openInTodoist(projectUrl(id));
+      },
+      plugins: { legend: { display: false }, tooltip: tooltipStyle() },
+      scales: {
+        x: { grid: { color: GRID_COLOR }, ticks: { color: TEXT_COLOR, precision: 0 }, beginAtZero: true },
+        y: { grid: { display: false }, ticks: { color: TEXT_COLOR } },
+      },
+    },
+  });
+}
+
+export function renderLeadTime({ labels, data }) {
+  return renderChart('chart-lead-time', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Tasks',
+        data,
+        backgroundColor: '#22d3ee',
+        borderRadius: 4,
+        maxBarThickness: 50,
+      }],
+    },
+    options: baseCartesianOptions(),
+  });
+}
+
+export function renderCompletionTrends({ labels, data, compData }) {
+  const datasets = [
+    {
+      label: 'This period',
+      data,
+      borderColor: ACCENT,
+      backgroundColor: 'rgba(99,102,241,0.12)',
+      tension: 0.3,
+      pointRadius: 2,
+      borderWidth: 2,
+      fill: true,
+    },
+  ];
+  if (compData) {
+    datasets.push({
+      label: 'Prior period',
+      data: compData,
+      borderColor: '#64748b',
+      backgroundColor: 'transparent',
+      tension: 0.3,
+      pointRadius: 0,
+      borderWidth: 1.5,
+      borderDash: [4, 4],
+    });
+  }
+  return renderChart('chart-completion-trends', {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: !!compData,
+          position: 'top',
+          align: 'end',
+          labels: { color: TEXT_COLOR, boxWidth: 12 },
+        },
+        tooltip: tooltipStyle(),
+      },
+      scales: {
+        x: { grid: { color: GRID_COLOR }, ticks: { color: TEXT_COLOR, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
+        y: { grid: { color: GRID_COLOR }, ticks: { color: TEXT_COLOR, precision: 0 }, beginAtZero: true },
       },
     },
   });

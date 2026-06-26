@@ -43,6 +43,18 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <!-- Section visibility toggle -->
+        <div class="relative">
+          <button id="visibility-btn" type="button" title="Show/hide sections"
+            class="inline-flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+          <div id="visibility-panel" class="hidden absolute right-0 top-12 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 py-1"></div>
+        </div>
+
         <button id="refresh-btn" type="button" title="Refresh data"
           class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
@@ -53,9 +65,35 @@
         <button id="settings-btn" type="button" title="Settings"
           class="inline-flex items-center justify-center w-10 h-10 rounded-lg text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M8.34 1.804A1 1 0 019.32 1h1.36a1 1 0 01.98.804l.215 1.072c.073.36.36.66.717.78.355.121.75.106 1.076-.06l.969-.5a1 1 0 011.21.39l.665 1.15a1 1 0 01-.214 1.231l-.838.74a.998.998 0 000 1.49l.838.74a1 1 0 01.214 1.232l-.665 1.15a1 1 0 01-1.21.39l-.97-.5a1.07 1.07 0 00-1.075-.06.998.998 0 00-.717.78l-.215 1.072a1 1 0 01-.98.804H9.32a1 1 0 01-.98-.804l-.215-1.072a.998.998 0 00-.717-.78 1.07 1.07 0 00-1.076.06l-.969.5a1 1 0 01-1.21-.39l-.665-1.15a1 1 0 01.214-1.232l.838-.74a.998.998 0 000-1.49l-.838-.74a1 1 0 01-.214-1.231l.665-1.15a1 1 0 011.21-.39l.97.5a1.07 1.07 0 001.075.06.998.998 0 00.717-.78l.215-1.072zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+            <path fill-rule="evenodd" d="M8.34 1.804A1 1 0 019.32 1h1.36a1 1 0 01.98.804l.215 1.072c.073.36.36.66.717.78.355.121.75.106 1.076-.06l.969-.5a1 1 0 011.21.39l.665 1.15a1 1 0 01-.214 1.231l-.838.74a.998.998 0 000 1.49l.838.74a1 1 0 01.214 1.232l-.665 1.15a1 1 0 01-1.21.39l-.97-.5a1.07 1.07 0 00-1.075-.06.998.998 0 00-.717.78l-.215 1.072a1 1 0 01-.98.804H9.32a1 1 0 01-.98-.804l-.215-1.072a.998.998 0 00-.717-.78 1.07 1.07 0 00-1.076.06l-.969.5a1 1 0 01-1.21-.39l-.665-1.15a1 1 0 01.214-1.232l.838-.74a.998.998 0 000-1.49l-.838-.74a1 1 0 01-.214-1.231l.665-1.15a1 1 0 011.21-.39l.97.5a1.07 1.07 0 001.075.06.998.998 0 00-.717-.78l-.215-1.072zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
           </svg>
         </button>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div id="filter-bar" class="hidden border-t border-slate-800/60 bg-slate-950/60">
+      <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center gap-4">
+        <!-- Date range -->
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs text-slate-500 font-medium mr-0.5">Range</span>
+          <button class="date-btn" data-days="7">7d</button>
+          <button class="date-btn" data-days="30">30d</button>
+          <button class="date-btn active" data-days="90">90d</button>
+          <button class="date-btn" data-days="">All</button>
+        </div>
+        <!-- Project filter -->
+        <div class="relative" id="project-filter-wrap">
+          <button id="project-filter-btn"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors whitespace-nowrap">
+            All Projects ▾
+          </button>
+          <div id="project-filter-dropdown"
+            class="hidden absolute left-0 top-9 w-64 max-h-72 overflow-y-auto bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 py-2 px-1"
+            id="project-filter-dropdown">
+            <div id="project-filter-list" class="space-y-0.5"></div>
+          </div>
+        </div>
       </div>
     </div>
   </header>
@@ -138,96 +176,191 @@
         </div>
       </div>
 
-      <!-- Charts grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Insights Summary -->
+      <div data-section="section-insights" class="mb-6">
+        <h2 class="section-header">Insights</h2>
+        <div class="chart-card" id="insights-summary"></div>
+      </div>
 
-        <div class="chart-card">
-          <h3 class="chart-title">Active Tasks by Project</h3>
-          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
-          <div class="chart-container">
-            <canvas id="chart-tasks-by-project"></canvas>
-          </div>
-        </div>
+      <!-- Charts: active task tiles -->
+      <div data-section="section-active" class="mb-6">
+        <h2 class="section-header">Active Tasks</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <div class="chart-card">
-          <h3 class="chart-title">Active Tasks by Age</h3>
-          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
-          <div class="chart-container">
-            <canvas id="chart-tasks-by-age"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Tasks by Label</h3>
-          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
-          <div class="chart-scroll">
-            <div class="chart-container" id="chart-tasks-by-label-wrap">
-              <canvas id="chart-tasks-by-label"></canvas>
+          <div class="chart-card">
+            <h3 class="chart-title">Active Tasks by Project</h3>
+            <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
+            <div class="chart-container">
+              <canvas id="chart-tasks-by-project"></canvas>
             </div>
           </div>
-          <div class="chart-axis">
-            <canvas id="chart-tasks-by-label-axis"></canvas>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Active Tasks by Age</h3>
+            <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
+            <div class="chart-container">
+              <canvas id="chart-tasks-by-age"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Tasks by Label</h3>
+            <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
+            <div class="chart-scroll">
+              <div class="chart-container" id="chart-tasks-by-label-wrap">
+                <canvas id="chart-tasks-by-label"></canvas>
+              </div>
+            </div>
+            <div class="chart-axis">
+              <canvas id="chart-tasks-by-label-axis"></canvas>
+            </div>
+          </div>
+
+          <div>
+            <div class="chart-card w-fit min-w-[220px]">
+              <h3 class="chart-title">Projects with Overdue Tasks</h3>
+              <p class="chart-subtitle">Click to open in Todoist</p>
+              <div id="overdue-by-project-list" class="pt-2"></div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Due in the next 7 Days</h3>
+            <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
+            <div class="chart-container chart-container-tall">
+              <canvas id="chart-upcoming"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Completed Tasks by Project</h3>
+            <p class="chart-subtitle">Completions in the selected period</p>
+            <div class="chart-container">
+              <canvas id="chart-completed-by-project"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /section-active -->
+
+      <!-- Charts: completion trends -->
+      <div data-section="section-completions" class="mb-6">
+        <h2 class="section-header">Completions</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <div class="chart-card lg:col-span-2">
+            <h3 class="chart-title">Completion Trends</h3>
+            <p class="chart-subtitle">Daily completions &mdash; dashed line shows prior period</p>
+            <div class="chart-container chart-container-wide">
+              <canvas id="chart-completion-trends"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card lg:col-span-2">
+            <h3 class="chart-title">Net Task Flow</h3>
+            <p class="chart-subtitle">Tasks created vs. completed each day</p>
+            <div class="chart-container chart-container-wide">
+              <canvas id="chart-net-task-flow"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card lg:col-span-2">
+            <h3 class="chart-title">Completions Over Time</h3>
+            <div class="chart-container chart-container-wide">
+              <canvas id="chart-completions-over-time"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Completions by Day of Week</h3>
+            <div class="chart-container">
+              <canvas id="chart-completions-by-weekday"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Weekly Completions</h3>
+            <div class="chart-container">
+              <canvas id="chart-weekly-completions"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /section-completions -->
+
+      <!-- Backlog health + recently completed -->
+      <div data-section="section-health" class="mb-6">
+        <h2 class="section-header">Health &amp; Recent</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <div class="chart-card">
+            <h3 class="chart-title">Backlog Health</h3>
+            <p class="chart-subtitle">Score based on overdue, age, and priority gaps</p>
+            <div id="backlog-health" class="pt-2"></div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Recently Completed</h3>
+            <p class="chart-subtitle">Latest completions in the selected period</p>
+            <ul class="task-list mt-2" id="list-recently-completed"></ul>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="chart-title">Recurring Tasks</h3>
+            <p class="chart-subtitle">Active habits &amp; routines</p>
+            <div id="recurring-tasks" class="pt-2"></div>
+          </div>
+
+        </div>
+      </div><!-- /section-health -->
+
+      <!-- Task lead time -->
+      <div data-section="section-lead-time" class="mb-6">
+        <h2 class="section-header">Lead Time</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <div class="chart-card lg:col-span-2">
+            <h3 class="chart-title">Task Lead Time</h3>
+            <p class="chart-subtitle">How long tasks take from creation to completion</p>
+            <div class="chart-container chart-container-wide">
+              <canvas id="chart-lead-time"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /section-lead-time -->
+
+      <!-- Word cloud -->
+      <div data-section="section-wordcloud" class="mb-6">
+        <h2 class="section-header">Topics</h2>
+        <div class="grid grid-cols-1 gap-6">
+          <div class="chart-card">
+            <h3 class="chart-title">Task Topics</h3>
+            <p class="chart-subtitle">Most common words in your active task names</p>
+            <div id="word-cloud" class="flex flex-wrap pt-3 min-h-[100px]"></div>
           </div>
         </div>
+      </div><!-- /section-wordcloud -->
 
-        <div class="chart-card">
-          <h3 class="chart-title">Projects with Overdue Tasks</h3>
-          <p class="chart-subtitle">Click a bar to open those overdue tasks in Todoist</p>
-          <div class="chart-container">
-            <canvas id="chart-overdue-by-project"></canvas>
+      <!-- Task lists -->
+      <div data-section="section-lists" class="mb-6">
+        <h2 class="section-header">Task Lists</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <div class="chart-card">
+            <h3 class="chart-title">Tasks Without a Label</h3>
+            <p class="task-list-count" id="count-no-label">&ndash;</p>
+            <ul class="task-list" id="list-no-label"></ul>
           </div>
-        </div>
 
-        <div class="chart-card">
-          <h3 class="chart-title">Due in the next 7 Days</h3>
-          <p class="chart-subtitle">Click a bar to open those tasks in Todoist</p>
-          <div class="chart-container chart-container-tall">
-            <canvas id="chart-upcoming"></canvas>
+          <div class="chart-card">
+            <h3 class="chart-title">Tasks Without a Project</h3>
+            <p class="task-list-count" id="count-no-project">&ndash;</p>
+            <ul class="task-list" id="list-no-project"></ul>
           </div>
-        </div>
 
-        <div class="chart-card lg:col-span-2">
-          <h3 class="chart-title">Net Task Flow (Last 90 Days)</h3>
-          <p class="chart-subtitle">Tasks created vs. completed each day</p>
-          <div class="chart-container chart-container-wide">
-            <canvas id="chart-net-task-flow"></canvas>
-          </div>
         </div>
-
-        <div class="chart-card lg:col-span-2">
-          <h3 class="chart-title">Completions Over Time (Last 30 Days)</h3>
-          <div class="chart-container chart-container-wide">
-            <canvas id="chart-completions-over-time"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Completions by Day of Week (Last 90 Days)</h3>
-          <div class="chart-container">
-            <canvas id="chart-completions-by-weekday"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Weekly Completions (Last 8 Weeks)</h3>
-          <div class="chart-container">
-            <canvas id="chart-weekly-completions"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Tasks Without a Label</h3>
-          <p class="task-list-count" id="count-no-label">&ndash;</p>
-          <ul class="task-list" id="list-no-label"></ul>
-        </div>
-
-        <div class="chart-card">
-          <h3 class="chart-title">Tasks Without a Project</h3>
-          <p class="task-list-count" id="count-no-project">&ndash;</p>
-          <ul class="task-list" id="list-no-project"></ul>
-        </div>
-
-      </div>
+      </div><!-- /section-lists -->
     </section>
   </main>
 
