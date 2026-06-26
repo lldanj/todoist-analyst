@@ -132,6 +132,33 @@ export function renderWeeklyCompletions({ labels, data }) {
 }
 
 export function renderTasksByProject({ labels, data, ids }) {
+  const wrap = document.getElementById('chart-tasks-by-project-wrap');
+  if (wrap) {
+    const rowHeight = 28;
+    const minHeight = 276;
+    wrap.style.height = `${Math.max(minHeight, labels.length * rowHeight)}px`;
+  }
+
+  const maxValue = Math.max(1, ...data);
+  const { max: axisMax, step: axisStep } = niceAxisBounds(maxValue);
+
+  renderChart('chart-tasks-by-project-axis', {
+    type: 'bar',
+    data: { labels: [''], datasets: [{ data: [0], backgroundColor: 'transparent' }] },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: { padding: { right: LABEL_AXIS_RIGHT_PADDING } },
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { min: 0, max: axisMax, ticks: { color: TEXT_COLOR, precision: 0, stepSize: axisStep }, grid: { color: GRID_COLOR } },
+        y: { display: false, afterFit: lockLabelAxisWidth },
+      },
+    },
+  });
+
   return renderChart('chart-tasks-by-project', {
     type: 'bar',
     data: {
@@ -140,7 +167,7 @@ export function renderTasksByProject({ labels, data, ids }) {
         data,
         backgroundColor: PALETTE.slice(0, labels.length),
         borderRadius: 4,
-        maxBarThickness: 28,
+        maxBarThickness: 24,
       }],
     },
     options: {
@@ -153,10 +180,11 @@ export function renderTasksByProject({ labels, data, ids }) {
         const id = ids?.[elements[0].index];
         if (id) openInTodoist(projectUrl(id));
       },
+      layout: { padding: { right: LABEL_AXIS_RIGHT_PADDING } },
       plugins: { legend: { display: false }, tooltip: tooltipStyle() },
       scales: {
-        x: { grid: { color: GRID_COLOR }, ticks: { color: TEXT_COLOR, precision: 0 }, beginAtZero: true },
-        y: { grid: { display: false }, ticks: { color: TEXT_COLOR } },
+        x: { min: 0, max: axisMax, ticks: { display: false, stepSize: axisStep }, border: { display: false }, grid: { color: GRID_COLOR } },
+        y: { grid: { display: false }, ticks: { color: TEXT_COLOR }, afterFit: lockLabelAxisWidth },
       },
     },
   });
@@ -283,6 +311,33 @@ export function renderOverdueByProject({ labels, data, projectNames }) {
 }
 
 export function renderCompletedByProject({ labels, data, ids }) {
+  const wrap = document.getElementById('chart-completed-by-project-wrap');
+  if (wrap) {
+    const rowHeight = 28;
+    const minHeight = 276;
+    wrap.style.height = `${Math.max(minHeight, labels.length * rowHeight)}px`;
+  }
+
+  const maxValue = Math.max(1, ...data);
+  const { max: axisMax, step: axisStep } = niceAxisBounds(maxValue);
+
+  renderChart('chart-completed-by-project-axis', {
+    type: 'bar',
+    data: { labels: [''], datasets: [{ data: [0], backgroundColor: 'transparent' }] },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: { padding: { right: LABEL_AXIS_RIGHT_PADDING } },
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { min: 0, max: axisMax, ticks: { color: TEXT_COLOR, precision: 0, stepSize: axisStep }, grid: { color: GRID_COLOR } },
+        y: { display: false, afterFit: lockLabelAxisWidth },
+      },
+    },
+  });
+
   return renderChart('chart-completed-by-project', {
     type: 'bar',
     data: {
@@ -291,7 +346,7 @@ export function renderCompletedByProject({ labels, data, ids }) {
         data,
         backgroundColor: PALETTE.slice(0, labels.length),
         borderRadius: 4,
-        maxBarThickness: 28,
+        maxBarThickness: 24,
       }],
     },
     options: {
@@ -304,10 +359,11 @@ export function renderCompletedByProject({ labels, data, ids }) {
         const id = ids?.[elements[0].index];
         if (id) openInTodoist(projectUrl(id));
       },
+      layout: { padding: { right: LABEL_AXIS_RIGHT_PADDING } },
       plugins: { legend: { display: false }, tooltip: tooltipStyle() },
       scales: {
-        x: { grid: { color: GRID_COLOR }, ticks: { color: TEXT_COLOR, precision: 0 }, beginAtZero: true },
-        y: { grid: { display: false }, ticks: { color: TEXT_COLOR } },
+        x: { min: 0, max: axisMax, ticks: { display: false, stepSize: axisStep }, border: { display: false }, grid: { color: GRID_COLOR } },
+        y: { grid: { display: false }, ticks: { color: TEXT_COLOR }, afterFit: lockLabelAxisWidth },
       },
     },
   });

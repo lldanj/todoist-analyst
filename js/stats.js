@@ -166,30 +166,19 @@ export function weeklyCompletions(completedTasks, weeks = 8, now = new Date()) {
   return { labels, data };
 }
 
-export function tasksByProject(tasks, projects, maxSlices = 7) {
+export function tasksByProject(tasks, projects) {
   const nameById = new Map(projects.map((p) => [p.id, p.name]));
-  const counts = new Map(); // projectId -> count
-  const names = new Map(); // projectId -> name
+  const counts = new Map();
 
   for (const t of tasks) {
     const id = t.project_id;
     counts.set(id, (counts.get(id) || 0) + 1);
-    names.set(id, nameById.get(id) || 'Unknown');
   }
 
   const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  const top = sorted.slice(0, maxSlices);
-  const rest = sorted.slice(maxSlices);
-  const restTotal = rest.reduce((sum, [, count]) => sum + count, 0);
-
-  const labels = top.map(([id]) => names.get(id));
-  const data = top.map(([, count]) => count);
-  const ids = top.map(([id]) => id);
-  if (restTotal > 0) {
-    labels.push('Other');
-    data.push(restTotal);
-    ids.push(null);
-  }
+  const labels = sorted.map(([id]) => nameById.get(id) || 'Unknown');
+  const data = sorted.map(([, count]) => count);
+  const ids = sorted.map(([id]) => id);
 
   return { labels, data, ids };
 }
@@ -251,32 +240,43 @@ export function tasksWithoutProject(tasks) {
   return taskListSummary(tasks, (t) => !t.project_id);
 }
 
-export function upcomingWorkload(tasks, days = 7, now = new Date()) {
-  const today = startOfDay(now);
-  const counts = new Map();
+/**
+ * Individual tasks due in the next `days` days (plus all overdue), sorted
+ * overdue-first then by ascending due date. Each entry carries the content,
+ * labels, project name, due date string, and a status tag.
+ */
+export function upcomingTaskList(tasks, projects, days = 7, now = new Date()) {
+  const todayStr = toLocalDateStr(now);
+  const endStr = toLocalDateStr(addDays(now, days - 1));
+  const projectById = new Map(projects.map(p => [p.id, p.name]));
 
+  const result = [];
   for (const t of tasks) {
     if (!t.due?.date) continue;
-    // `due.date` is "YYYY-MM-DD" for all-day tasks but can include a time
-    // component (e.g. "YYYY-MM-DDTHH:MM:SS") for tasks with a specific due
-    // time; take just the date part so this always parses as local midnight.
-    const dueDate = startOfDay(new Date(`${t.due.date.slice(0, 10)}T00:00:00`));
-    const diffDays = Math.round((dueDate - today) / MS_PER_DAY);
-    if (diffDays < 0 || diffDays >= days) continue;
-    const key = toLocalDateStr(dueDate);
-    counts.set(key, (counts.get(key) || 0) + 1);
+    const dueDateStr = t.due.date.slice(0, 10);
+    let status;
+    if (dueDateStr < todayStr) status = 'overdue';
+    else if (dueDateStr === todayStr) status = 'today';
+    else if (dueDateStr <= endStr) status = 'upcoming';
+    else continue;
+
+    result.push({
+      id: t.id,
+      content: t.content,
+      labels: t.labels || [],
+      project: projectById.get(t.project_id) || null,
+      dueDateStr,
+      status,
+    });
   }
 
-  const labels = [];
-  const data = [];
-  const dates = [];
-  for (let i = 0; i < days; i++) {
-    const d = addDays(today, i);
-    labels.push(i === 0 ? 'Today' : shortDateLabel(d));
-    data.push(counts.get(toLocalDateStr(d)) || 0);
-    dates.push(i === 0 ? 'today' : d);
-  }
-  return { labels, data, dates };
+  const statusOrder = { overdue: 0, today: 1, upcoming: 2 };
+  result.sort((a, b) => {
+    const so = statusOrder[a.status] - statusOrder[b.status];
+    return so !== 0 ? so : a.dueDateStr.localeCompare(b.dueDateStr);
+  });
+
+  return result;
 }
 
 /**
@@ -417,7 +417,7 @@ export function weekOverWeek(completedTasks, now = new Date()) {
 }
 
 /** Completed tasks counted per project (for the selected period). */
-export function completedByProject(completedTasks, projects, maxSlices = 8) {
+export function completedByProject(completedTasks, projects) {
   const nameById = new Map(projects.map(p => [p.id, p.name]));
   const counts = new Map();
   for (const t of completedTasks) {
@@ -426,13 +426,9 @@ export function completedByProject(completedTasks, projects, maxSlices = 8) {
     counts.set(id, (counts.get(id) || 0) + 1);
   }
   const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  const top = sorted.slice(0, maxSlices);
-  const rest = sorted.slice(maxSlices);
-  const restTotal = rest.reduce((sum, [, c]) => sum + c, 0);
-  const labels = top.map(([id]) => nameById.get(id) || 'Unknown');
-  const data = top.map(([, c]) => c);
-  const ids = top.map(([id]) => id);
-  if (restTotal > 0) { labels.push('Other'); data.push(restTotal); ids.push(null); }
+  const labels = sorted.map(([id]) => nameById.get(id) || 'Unknown');
+  const data = sorted.map(([, c]) => c);
+  const ids = sorted.map(([id]) => id);
   return { labels, data, ids };
 }
 

@@ -11,6 +11,7 @@ const els = {
   errorBannerClose: document.getElementById('error-banner-close'),
   lastUpdated: document.getElementById('last-updated'),
   kpi: {
+    total: document.getElementById('kpi-total'),
     active: document.getElementById('kpi-active'),
     overdue: document.getElementById('kpi-overdue'),
     completedToday: document.getElementById('kpi-completed-today'),
@@ -55,7 +56,8 @@ export function hideError() {
 
 els.errorBannerClose.addEventListener('click', hideError);
 
-export function renderKpis({ active, overdue, completedToday, completedWeek, streak, avgCompletion, avgPerDay14 }) {
+export function renderKpis({ total, active, overdue, completedToday, completedWeek, streak, avgCompletion, avgPerDay14 }) {
+  els.kpi.total.textContent = total;
   els.kpi.active.textContent = active;
   els.kpi.overdue.textContent = overdue;
   els.kpi.completedToday.textContent = completedToday;
@@ -93,16 +95,22 @@ function renderTaskListCard({ count, list }, { count: taskCount, tasks }) {
 }
 
 export function renderTasksWithoutLabel({ count, groups }) {
-  els.noLabel.count.textContent = count;
+  const card = els.noLabel.count.closest('.chart-card');
+  const compactMsg = card?.querySelector('.task-list-compact-msg');
   const list = els.noLabel.list;
-  list.innerHTML = '';
-  if (groups.length === 0) {
-    const li = document.createElement('li');
-    li.className = 'task-list-empty';
-    li.textContent = 'None — nice work!';
-    list.appendChild(li);
+
+  els.noLabel.count.textContent = count;
+
+  if (count === 0) {
+    card?.classList.add('chart-card--compact');
+    compactMsg?.classList.remove('hidden');
+    list.innerHTML = '';
     return;
   }
+
+  card?.classList.remove('chart-card--compact');
+  compactMsg?.classList.add('hidden');
+  list.innerHTML = '';
   for (const group of groups) {
     const header = document.createElement('li');
     header.className = 'task-list-group-header';
@@ -116,8 +124,22 @@ export function renderTasksWithoutLabel({ count, groups }) {
   }
 }
 
-export function renderTasksWithoutProject(data) {
-  renderTaskListCard(els.noProject, data);
+export function renderTasksWithoutProject({ count, tasks }) {
+  const card = els.noProject.count.closest('.chart-card');
+  const compactMsg = card?.querySelector('.task-list-compact-msg');
+
+  els.noProject.count.textContent = count;
+
+  if (count === 0) {
+    card?.classList.add('chart-card--compact');
+    compactMsg?.classList.remove('hidden');
+    els.noProject.list.innerHTML = '';
+    return;
+  }
+
+  card?.classList.remove('chart-card--compact');
+  compactMsg?.classList.add('hidden');
+  renderTaskListCard(els.noProject, { count, tasks });
 }
 
 export function setLastUpdated(date) {
@@ -271,6 +293,81 @@ export function renderOverdueByProject({ labels, data, projectNames }) {
   }
 }
 
+export function renderUpcomingList(tasks) {
+  const list = document.getElementById('list-upcoming');
+  if (!list) return;
+  list.innerHTML = '';
+
+  if (!tasks.length) {
+    const li = document.createElement('li');
+    li.className = 'task-list-empty';
+    li.textContent = 'Nothing due in the next 7 days.';
+    list.appendChild(li);
+    return;
+  }
+
+  for (const t of tasks) {
+    const li = document.createElement('li');
+    li.className = 'flex flex-col gap-0.5 py-2 border-t border-slate-800/60 first:border-t-0';
+
+    // Top row: task name + date badge
+    const top = document.createElement('div');
+    top.className = 'flex items-start justify-between gap-2';
+
+    const a = document.createElement('a');
+    a.href = taskUrl(t.id);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.className = 'task-list-link flex-1 min-w-0';
+    a.textContent = t.content;
+
+    const badge = document.createElement('span');
+    badge.className = 'text-xs font-medium flex-shrink-0 mt-px';
+    if (t.status === 'overdue') {
+      const due = new Date(`${t.dueDateStr}T00:00:00`);
+      badge.className += ' text-rose-400';
+      badge.textContent = `Overdue · ${due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+    } else if (t.status === 'today') {
+      badge.className += ' text-amber-400';
+      badge.textContent = 'Today';
+    } else {
+      const due = new Date(`${t.dueDateStr}T00:00:00`);
+      badge.className += ' text-slate-500';
+      badge.textContent = due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    top.appendChild(a);
+    top.appendChild(badge);
+
+    // Bottom row: project + labels
+    const meta = document.createElement('div');
+    meta.className = 'flex items-center gap-1.5 text-xs text-slate-500 flex-wrap';
+
+    if (t.project) {
+      const proj = document.createElement('span');
+      proj.textContent = t.project;
+      meta.appendChild(proj);
+    }
+
+    for (const label of t.labels) {
+      if (t.project || meta.children.length > 0) {
+        const dot = document.createElement('span');
+        dot.className = 'text-slate-700';
+        dot.textContent = '·';
+        meta.appendChild(dot);
+      }
+      const chip = document.createElement('span');
+      chip.className = 'text-indigo-400';
+      chip.textContent = label;
+      meta.appendChild(chip);
+    }
+
+    li.appendChild(top);
+    if (meta.children.length) li.appendChild(meta);
+    list.appendChild(li);
+  }
+}
+
 export function renderRecurringTasks({ total, overdue, dueToday, upcoming, noDue }) {
   const el = document.getElementById('recurring-tasks');
   if (!el) return;
@@ -303,27 +400,37 @@ export function renderRecurringTasks({ total, overdue, dueToday, upcoming, noDue
 const CLOUD_COLORS = ['#6366f1','#22d3ee','#f59e0b','#34d399','#f472b6','#a78bfa','#fb923c','#38bdf8','#facc15','#4ade80'];
 
 export function renderWordCloud(words) {
-  const el = document.getElementById('word-cloud');
-  if (!el) return;
-  el.innerHTML = '';
+  const canvas = document.getElementById('word-cloud');
+  if (!canvas) return;
+
+  // Size the canvas to its CSS display size before drawing
+  canvas.width = canvas.offsetWidth || 600;
+  canvas.height = 320;
+
   if (!words.length) {
-    el.innerHTML = '<span class="text-slate-500 text-sm">No task content to analyze.</span>';
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '14px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No task content to analyze.', canvas.width / 2, canvas.height / 2);
     return;
   }
-  const max = words[0].count;
-  const min = words[words.length - 1].count;
-  words.forEach(({ word, count }, i) => {
-    const ratio = min === max ? 0.5 : (count - min) / (max - min);
-    const size = Math.round(11 + ratio * 22);
-    const color = CLOUD_COLORS[i % CLOUD_COLORS.length];
-    const span = document.createElement('span');
-    span.style.fontSize = `${size}px`;
-    span.style.color = color;
-    span.style.opacity = String(0.55 + ratio * 0.45);
-    span.className = 'cursor-default select-none leading-relaxed mx-1 inline-block';
-    span.textContent = word;
-    span.title = `${count} task${count !== 1 ? 's' : ''}`;
-    el.appendChild(span);
+
+  let colorIndex = 0;
+  const list = words.map(({ word, count }) => [word, count]);
+
+  WordCloud(canvas, {
+    list,
+    gridSize: Math.round(canvas.width / 60),
+    weightFactor: (size) => Math.pow(size, 0.9) * (canvas.width / 140),
+    fontFamily: "'Inter', system-ui, sans-serif",
+    color: () => CLOUD_COLORS[colorIndex++ % CLOUD_COLORS.length],
+    rotateRatio: 0.25,
+    rotationSteps: 2,
+    backgroundColor: 'transparent',
+    minSize: 10,
+    shuffle: true,
   });
 }
 

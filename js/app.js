@@ -71,6 +71,7 @@ function renderAll() {
 
   const wow = stats.weekOverWeek(d.allCompletedTasks, now);
   ui.renderKpis({
+    total: d.tasks.length + d.completedTasks.length,
     active: stats.countActiveTasks(d.tasks),
     overdue: stats.countOverdueTasks(d.tasks, now),
     completedToday: stats.countCompletedOnDate(d.completedTasks, now),
@@ -98,7 +99,7 @@ function renderAll() {
   charts.renderTasksByAge(stats.tasksByAge(d.tasks, now));
   charts.renderTasksByLabel(stats.tasksByLabel(d.tasks));
   ui.renderOverdueByProject(stats.overdueByProject(d.tasks, d.projects, now));
-  charts.renderUpcomingWorkload(stats.upcomingWorkload(d.tasks, 7, now));
+  ui.renderUpcomingList(stats.upcomingTaskList(d.tasks, d.projects, 7, now));
 
   // Existing completion charts (now respect date + project filter)
   const trendDays = filters.dateRangeDays ?? 30;

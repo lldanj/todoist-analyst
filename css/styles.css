@@ -108,6 +108,15 @@
   border-top: 1px solid #1e293b;
 }
 
+.chart-card--compact {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.chart-card--compact .task-list-count,
+.chart-card--compact .task-list {
+  display: none;
+}
+
 .task-list-count {
   font-size: 2rem;
   font-weight: 700;
