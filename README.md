@@ -6,7 +6,7 @@ projects, labels, and completion history straight from the Todoist API and
 turns them into KPIs and charts to help you see where your attention is
 needed and where tasks are quietly piling up.
 
-![Active Tasks by Project](assets/screenshots/analyst1.png)
+![app screenshot](assets/screenshots/analyst1.png)
 
 ## Features
 
