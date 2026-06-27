@@ -11,6 +11,7 @@ const refreshBtn = document.getElementById('refresh-btn');
 let isLoading = false;
 let hasLoadedOnce = false;
 let rawData = null; // fetched once; renderAll() filters in-memory
+let historicalCompletedCount = null; // loaded asynchronously after initial render
 
 const filters = {
   dateRangeDays: 90,        // null = all fetched data
@@ -70,8 +71,9 @@ function renderAll() {
   const d = applyFilters(rawData, now);
 
   const wow = stats.weekOverWeek(d.allCompletedTasks, now);
+  const completedForTotal = historicalCompletedCount ?? rawData.completedTasks.length;
   ui.renderKpis({
-    total: d.tasks.length + (rawData.productivityStats?.totalCompletedAllTime ?? d.completedTasks.length),
+    total: rawData.tasks.length + completedForTotal,
     active: stats.countActiveTasks(d.tasks),
     overdue: stats.countOverdueTasks(d.tasks, now),
     completedToday: stats.countCompletedOnDate(d.completedTasks, now),
@@ -155,6 +157,22 @@ async function loadDashboard() {
     renderAll();
     ui.showView('dashboard');
     hasLoadedOnce = true;
+
+    // Fetch full completion history asynchronously — updates the Total KPI
+    // as each window comes in, then caches the final count for 6 hours.
+    api.fetchHistoricalCompletedCount(
+      completedTasks.length,
+      30,
+      (countSoFar) => {
+        historicalCompletedCount = countSoFar;
+        const el = document.getElementById('kpi-total');
+        if (el) el.textContent = rawData.tasks.length + countSoFar;
+      }
+    ).then((finalCount) => {
+      historicalCompletedCount = finalCount;
+      const el = document.getElementById('kpi-total');
+      if (el) el.textContent = rawData.tasks.length + finalCount;
+    });
   } catch (err) {
     console.error(err);
     let message = err.message || 'Failed to load data from Todoist.';
@@ -265,7 +283,12 @@ function init() {
 
   initDateRangeFilter();
   ui.initVisibilityToggle();
-  refreshBtn.addEventListener('click', () => { rawData = null; loadDashboard(); });
+  refreshBtn.addEventListener('click', () => {
+    rawData = null;
+    historicalCompletedCount = null;
+    api.clearHistoricalCountCache();
+    loadDashboard();
+  });
 
   if (getToken()) {
     loadDashboard();

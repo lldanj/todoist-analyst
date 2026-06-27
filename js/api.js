@@ -141,6 +141,57 @@ export async function fetchCompletedTasks({ since, until, maxPages = 5 } = {}) {
   })).filter((item) => item.completedAt);
 }
 
+const HIST_COUNT_CACHE_KEY = 'analyst_historical_completed_count';
+const HIST_COUNT_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
+
+/**
+ * Fetches completed task counts for all history by walking backwards in
+ * 90-day windows until a window returns 0 tasks (or maxWindows is reached).
+ * Results are cached in localStorage for 6 hours so subsequent loads are fast.
+ *
+ * @param {number} recent90DayCount - count already fetched by the main load
+ *   (window 0: today → 90 days ago), so we don't double-fetch it
+ * @param {number} maxWindows - how many 90-day windows to look back (default
+ *   30 ≈ 7.5 years)
+ * @param {function} onProgress - optional callback(totalSoFar) for live KPI updates
+ */
+export async function fetchHistoricalCompletedCount(recent90DayCount, maxWindows = 30, onProgress) {
+  // Return cached value if fresh
+  try {
+    const cached = JSON.parse(localStorage.getItem(HIST_COUNT_CACHE_KEY) || 'null');
+    if (cached && Date.now() - cached.fetchedAt < HIST_COUNT_CACHE_TTL) {
+      return cached.count;
+    }
+  } catch {}
+
+  const now = new Date();
+  let total = recent90DayCount;
+
+  // Walk backwards starting from window 1 (window 0 is the main 90-day fetch)
+  for (let i = 1; i <= maxWindows; i++) {
+    const until = new Date(now.getTime() - i * 90 * 24 * 60 * 60 * 1000);
+    const since = new Date(until.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+    const tasks = await fetchCompletedTasks({ since: since.toISOString(), until: until.toISOString() });
+    if (tasks.length === 0) break;
+    total += tasks.length;
+    if (onProgress) onProgress(total);
+  }
+
+  try {
+    localStorage.setItem(HIST_COUNT_CACHE_KEY, JSON.stringify({ count: total, fetchedAt: Date.now() }));
+  } catch {}
+
+  return total;
+}
+
+/**
+ * Clears the historical completed count cache (called on manual refresh).
+ */
+export function clearHistoricalCountCache() {
+  try { localStorage.removeItem(HIST_COUNT_CACHE_KEY); } catch {}
+}
+
 /**
  * Fetches productivity stats. Returns a normalized object or null if the
  * endpoint is unavailable / returns an unrecognized shape, so dependent UI
