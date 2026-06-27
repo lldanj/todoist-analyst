@@ -167,25 +167,33 @@ export async function fetchHistoricalCompletedCount(recent90DayCount, maxWindows
   const now = new Date();
   let total = recent90DayCount;
   let consecutiveEmpty = 0;
-  const MAX_CONSECUTIVE_EMPTY = 3; // tolerate silent API gaps before giving up
+  const MAX_CONSECUTIVE_EMPTY = 3;
 
-  // Walk backwards starting from window 1 (window 0 is the main 90-day fetch)
+  console.log(`[history] starting — window 0 (recent 90d) already has ${recent90DayCount} tasks`);
+
   for (let i = 1; i <= maxWindows; i++) {
     const until = new Date(now.getTime() - i * 90 * 24 * 60 * 60 * 1000);
     const since = new Date(until.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const label = `${since.toISOString().slice(0, 10)} → ${until.toISOString().slice(0, 10)}`;
 
-    // 10 pages × 200 tasks = up to 2,000 tasks per 90-day window
     const tasks = await fetchCompletedTasks({ since: since.toISOString(), until: until.toISOString(), maxPages: 10 });
+    console.log(`[history] window ${i} (${label}): ${tasks.length} tasks`);
 
     if (tasks.length === 0) {
       consecutiveEmpty++;
-      if (consecutiveEmpty >= MAX_CONSECUTIVE_EMPTY) break;
+      console.log(`[history] empty window ${consecutiveEmpty}/${MAX_CONSECUTIVE_EMPTY}`);
+      if (consecutiveEmpty >= MAX_CONSECUTIVE_EMPTY) {
+        console.log('[history] stopping — 3 consecutive empty windows');
+        break;
+      }
     } else {
       consecutiveEmpty = 0;
       total += tasks.length;
       if (onProgress) onProgress(total);
     }
   }
+
+  console.log(`[history] done — total: ${total}`);
 
   try {
     localStorage.setItem(HIST_COUNT_CACHE_KEY, JSON.stringify({ count: total, fetchedAt: Date.now() }));
