@@ -71,7 +71,7 @@ function renderAll() {
 
   const wow = stats.weekOverWeek(d.allCompletedTasks, now);
   ui.renderKpis({
-    total: d.tasks.length + d.completedTasks.length,
+    total: d.tasks.length + (rawData.productivityStats?.totalCompletedAllTime ?? d.completedTasks.length),
     active: stats.countActiveTasks(d.tasks),
     overdue: stats.countOverdueTasks(d.tasks, now),
     completedToday: stats.countCompletedOnDate(d.completedTasks, now),

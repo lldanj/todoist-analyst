@@ -161,8 +161,15 @@ export async function fetchProductivityStats() {
   const currentDailyStreak = goals.current_daily_streak?.count ?? null;
   const currentWeeklyStreak = goals.current_weekly_streak?.count ?? null;
 
+  // days_items holds historical per-day completion counts used for karma;
+  // summing them gives a much more complete "all-time completed" total than
+  // the 90-day window we fetch from the completed tasks endpoint.
+  const daysItems = data.days_items || [];
+  const totalCompletedAllTime = daysItems.reduce((sum, d) => sum + (d.total_completed || 0), 0);
+
   return {
     currentDailyStreak,
     currentWeeklyStreak,
+    totalCompletedAllTime,
   };
 }
