@@ -86,7 +86,9 @@ export function avgCompletedPerDay(completedTasks, days = 14, now = new Date()) 
  * yesterday) with at least one completed task.
  */
 export function currentStreak(completedTasks, productivityStats, now = new Date()) {
-  if (productivityStats?.currentDailyStreak != null) {
+  // Only trust the API streak if it's positive — Todoist returns 0 when karma
+  // goals aren't configured, even if the user has completed tasks recently.
+  if (productivityStats?.currentDailyStreak > 0) {
     return productivityStats.currentDailyStreak;
   }
 
